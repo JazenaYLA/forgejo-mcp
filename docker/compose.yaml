@@ -1,0 +1,23 @@
+# forgejo-mcp — MCP bridge for Forgejo, exposing CTI repo/issue ops to AI assistants
+# Dockge stack: forgejo-mcp
+# SSE endpoint: http://<host>:8089/sse
+
+services:
+  forgejo-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: forgejo-mcp
+    restart: unless-stopped
+    environment:
+      - FORGEJO_URL=${FORGEJO_URL}
+      - FORGEJO_ACCESS_TOKEN=${FORGEJO_ACCESS_TOKEN}
+      - FORGEJO_DEBUG=${FORGEJO_DEBUG:-false}
+    ports:
+      - "${FORGEJO_MCP_PORT:-8089}:8080"
+    networks:
+      - cti-net
+
+networks:
+  cti-net:
+    external: true
