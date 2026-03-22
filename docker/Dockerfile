@@ -9,7 +9,7 @@ RUN git clone https://codeberg.org/goern/forgejo-mcp.git . && \
 RUN go build -o forgejo-mcp .
 
 FROM alpine:latest
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates curl
 WORKDIR /app
 COPY --from=builder /app/forgejo-mcp .
 EXPOSE 8080
