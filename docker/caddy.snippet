@@ -1,0 +1,47 @@
+# Caddy reverse proxy block for forgejo-mcp
+# Terminates TLS so Perplexity (and other remote MCP clients) can reach
+# the SSE endpoint over HTTPS.
+#
+# Requirements:
+#   - forgejo-mcp container must be reachable on your Caddy network as 'forgejo-mcp'
+#   - Replace 'yourdomain.com' with your actual domain
+#
+# Usage: append this block to your Caddyfile, then reload:
+#   docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+#
+# Perplexity Custom Connector settings:
+#   Transport : SSE
+#   URL       : https://forgejo-mcp.yourdomain.com/sse
+#   Auth      : API Key  (set the same Bearer token in Perplexity and below)
+
+forgejo-mcp.yourdomain.com {
+    # Optional: restrict access to authorised clients only.
+    # Set FORGEJO_MCP_API_KEY in your Caddy environment and enter the
+    # same value as the API Key in Perplexity's connector auth field.
+    # Uncomment both lines to enable:
+    # @unauthorized not header Authorization "Bearer {$FORGEJO_MCP_API_KEY}"
+    # respond @unauthorized 401
+
+    reverse_proxy forgejo-mcp:8080 {
+        # REQUIRED for SSE: disables response buffering so events stream
+        # to the client immediately instead of being held until flush.
+        flush_interval -1
+
+        transport http {
+            # Keep the upstream connection alive for long-running SSE streams
+            keepalive 5m
+            keepalive_idle_conns 10
+        }
+    }
+
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        -Server
+    }
+
+    log {
+        output file /var/log/caddy/forgejo-mcp.log
+        format json
+    }
+}
